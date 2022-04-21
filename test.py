@@ -18,6 +18,15 @@ class test:
         utz.enter2()
         self.uos1=uos()
 
+    def kutil(self, cmd):
+        utz.enter2()
+
+        self.uos1.uoscall(cmd)
+        if(self.uos1.bufout_txt !=None):
+            utz.print(self.uos1.bufout_txt)
+
+        return
+
     def namespaces(self, cls):
         utz.enter2()
        
@@ -31,16 +40,15 @@ class test:
 
     def crt_namespaces(self, cls):
         utz.enter2()
-       
-        cmd=" kubectl config use-context {cls}  -o json ".format(cls=cls)
-        self.uos1.uoscall(cmd)
-        if(self.uos1.bufout_txt !=None):
-            utz.print(self.uos1.bufout_txt)
 
-        cmd=" kubectl  create namespace av1 -o json "
-        self.uos1.uoscall(cmd)
-        if(self.uos1.bufout_txt !=None):
-            utz.print(self.uos1.bufout_txt)
+        self.kutil("kubectl  config use-context {cls}  -o json ".format(cls=cls))
+        self.kutil("kubectl  delete namespace av1   ")
+        self.kutil("kubectl  create namespace av1 -o json ")
+        self.kutil("kubectl    apply -f pymdb/storageclass-filestore.yaml ")
+        self.kutil("kubectl    apply -f pymdb/pvc-filestore.yaml ")
+        # self.kutil("kubectl    apply -f pymdb/pod.yaml ")
+ 
+
 
         return
         
@@ -53,7 +61,7 @@ class test:
         utz.print(self.uos1.bufout_txt)
 
 
-        cmd=" gcloud container clusters create {cls} --format=json ".format(cls=cls)
+        cmd=" gcloud container clusters create {cls} --format=json  --addons=GcpFilestoreCsiDriver".format(cls=cls)
         self.uos1.uoscall(cmd)
 
         respj=json.loads(self.uos1.bufout_txt)
@@ -72,7 +80,8 @@ class test:
         utz.print("thread: begin work ithr={ithr}".format(ithr=ithr))
         # nsec=2
         # utz.sleep(nsec,"sleep ithr={ithr} ".format(ithr=ithr))
-        self.gcp_cluster(cls)
+      
+        # self.gcp_cluster(cls)
         self.crt_namespaces(cls)
         utz.print("thread: end   work ithr={ithr}".format(ithr=ithr))
 
@@ -83,7 +92,7 @@ class test:
         self._lock = threading.Lock()
 
         lst_thr=list()
-        for ithr in range(1):
+        for ithr in range(0):
             # utz.sleep(1,"sleep ")
             pthr=threading.Thread(target=self.thr1,args=(ithr,))
             lst_thr.append(pthr)
@@ -98,10 +107,13 @@ def main():
     test1=test()
 
     test1.thr_run()
-    # cls="cls1"
-    # test1.gcp_cluster(cls)
-    # test1.namespaces(cls)
-    # test1.crt_namespaces(cls)
+
+    cls="cls1"
+    test1.gcp_cluster(cls)
+    test1.namespaces(cls)
+    test1.crt_namespaces(cls)
+
+    # test1.kutil("kubectl   apply -f pymdb/store-filestore.yaml ")
 
 
 
